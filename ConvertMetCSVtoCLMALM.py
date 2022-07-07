@@ -324,37 +324,52 @@ def load_csv(ctrlp,variables):
         
         iidx=0
         for idx,rowtext in enumerate(csvreader):
+            #print("rowtext = {a}".format(a=rowtext))
             if (idx>=ctrlp.n_header_row):
 
                 # Transfer CSV data in, convert units as well
                 
                 fillvar_convert_units(variables,rowtext,iidx)
-
+                #print("updatedRowText? = {a}\n".format(a=rowtext))
                 # Timing information
-                date_str1 = rowtext[1]
-                date_str2 = rowtext[2]
-                date1,time1 = date_str1.split(' ')
-                date2,time2 = date_str2.split(' ')
+                date_str1 = rowtext[0]
+                date_str2 = rowtext[1]
+                #print("str1: {a}\tstr2: {b}".format(a=rowtext[0], b=rowtext[1]))
+                #date1,time1 = date_str1.split(' ')
+                #date2,time2 = date_str2.split(' ')
 
-                if(ctrlp.date_format == 'Y-M-D'):
-                    yr1,mo1,dy1 = date1.split('-')
-                    yr2,mo2,dy2 = date2.split('-')
-                elif(ctrlp.date_format == 'M/D/Y'):
-                    mo1,dy1,yr1 = date1.split('/')
-                    mo2,dy2,yr2 = date2.split('/')
-                else:
-                    print('Incorectly specified date_format')
-                    exit(2)
-
-                if(ctrlp.time_format == 'H:M'):
-                    hr1,mn1 = time1.split(':')
-                    hr2,mn2 = time2.split(':')
-                elif(ctrlp.time_format == 'H:M:S'):
-                    hr1,mn1,sec1 = time1.split(':')
-                    hr2,mn2,sec2 = time2.split(':')
-                else:
-                    print('Incorectly specified time_format')
-                    exit(2)
+                #if(ctrlp.date_format == 'Y-M-D'):
+                #    yr1,mo1,dy1 = date1.split('-')
+                #    yr2,mo2,dy2 = date2.split('-')
+                #elif(ctrlp.date_format == 'M/D/Y'):
+                #    mo1,dy1,yr1 = date1.split('/')
+                #    mo2,dy2,yr2 = date2.split('/')
+                #else:
+                #print('Incorectly specified date_format')
+                #print('\nAttempting correct time format...')
+                #exit(2)
+                yr1=date_str1[:4]
+                yr2=date_str2[:4]
+                mo1=date_str1[4:6]
+                mo2=date_str2[4:6]
+                dy1=date_str1[6:8]
+                dy2=date_str2[6:8]
+                hr1=date_str1[8:10]
+                hr2=date_str2[8:10]
+                mn1=date_str1[10:12]
+                mn2=date_str2[10:12]
+                sec1=0
+                sec2=0 #data isn't this detailed I believe
+     	        #if(ctrlp.time_format == 'H:M'):
+                #    hr1,mn1 = time1.split(':')
+                #    hr2,mn2 = time2.split(':')
+                #elif(ctrlp.time_format == 'H:M:S'):
+                #    hr1,mn1,sec1 = time1.split(':')
+                #    hr2,mn2,sec2 = time2.split(':')
+                #else:
+                #print('Incorectly specified time_format')
+                #print('\nShould be correct, actually')
+		#exit(2)
 
                 iyr1 = int(yr1)
                 iyr2 = int(yr2)
@@ -365,6 +380,7 @@ def load_csv(ctrlp,variables):
                     iyr2 +=2000
 
                 t1 = date2num(datetime(iyr1,int(mo1),int(dy1),int(hr1),int(mn1)))
+                #print("{a}, {b}, {c}, {d}, {e}".format(a=iyr2, b=mo2, c=dy2, d=hr2, e=mn2))
                 t2 = date2num(datetime(iyr2,int(mo2),int(dy2),int(hr2),int(mn2)))
 
                 teff = np.mean([t1,t2])
@@ -492,6 +508,7 @@ def main(argv):
                 print('Must generate an even number of time-points per day')
                 exit(2)
 
+            ntime = int(ntime)
             day_of_month = []
             for itime in range(int(ntime)):
                 decimal_day = float(itime)*(float(ctrl_params.time_res_sec_out)/86400.0)
@@ -502,7 +519,7 @@ def main(argv):
             fp.createDimension('lat',1)
             fp.createDimension('scalar',1)
             
-            time_out    = fp.createVariable('time','f',('time',))
+            time_out    = fp.createVariable('time','f8',('time',))
             time_out[:] = day_of_month[:]
             time_out.units = 'days since {:04d}'.format(iyr)+'-{:02d}-01 00:00:00'.format(imo)
             time_out.calendar = 'noleap'
@@ -539,7 +556,7 @@ def main(argv):
 
                     datavec_out.append(float(np.mean( var.datavec[ids] )))
 
-                var_out = fp.createVariable(var.name,'f',('time','lat','lon'))
+                var_out = fp.createVariable(var.name,'f8',('time','lat','lon'))
                 var_out[:,0,0] = datavec_out
                 var_out.units = var.units
                 var_out.long_name = var.long_name
@@ -549,7 +566,7 @@ def main(argv):
             for const in constants:
 
                 if(const.dims == 1):
-                    const_out = fp.createVariable(const.name,'f',('scalar',))
+                    const_out = fp.createVariable(const.name,'f8',('scalar',))
                     const_out.assignValue(float(const.value))
                     const_out.units = const.units
                     const_out.long_name = const.long_name
@@ -557,7 +574,7 @@ def main(argv):
                     fp.flush()
 
                 elif(const.dims == 2):
-                    const_out = fp.createVariable(const.name,'f',('lat','lon'))
+                    const_out = fp.createVariable(const.name,'f8',('lat','lon'))
                     const_out.assignValue(const.value)
                     const_out.units = const.units
                     const_out.long_name = const.long_name
