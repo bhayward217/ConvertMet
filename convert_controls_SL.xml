@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <all>
   <!-- IMPORTANT - WHEN SPECIFYING COLUMN INDICES, ASSUME THE FIRST COLUMN IS INDEX 1, NOT 0 -->
-  <csv_file> AMF_US-MMS_FLUXNET_FULLSET_HR_1999-2020_3-5.csv </csv_file>
+  <csv_file> datafiles/FLX_US-MMS_FLUXNET2015/FLX_US-MMS_FLUXNET2015_FULLSET_HR_1999-2017_beta-3.csv </csv_file>
   <input_time_resolution> 100 </input_time_resolution> <!-- seconds -->
   <output_time_resolution> 3600 </output_time_resolution> <!-- integer multiples of 3600, evenly divisible into 24 hours -->
   <n_header_row> 1 </n_header_row>
@@ -75,8 +75,8 @@
     <long_name> precipitation </long_name>
     <units> mm/s </units>
     <mode> time-dependent </mode>
-    <col_id> 12 </col_id>
-    <unit_mult> 0.01666666 </unit_mult> <!-- mm/min - mm/s -->
+    <col_id> 35 </col_id>
+    <unit_mult> 0.00027777777777777 </unit_mult> <!-- mm/(hr?) - mm/s -->
     <unit_off> 0.0 </unit_off>
   </variable>
   <variable>
@@ -84,17 +84,17 @@
     <long_name> incident solar radiation </long_name>
     <units> W/m2 </units>
     <mode> time-dependent </mode>
-    <col_id> 8 </col_id>
+    <col_id> 12 </col_id>
     <unit_mult> 1.0 </unit_mult> <!-- w/m2 - w/m2 -->
     <unit_off> 0.0 </unit_off>
   </variable>
   <variable>
-    <name> RH </name>
-    <long_name> relative humidity at the tower </long_name>
-    <units> % </units>
+    <name> VPD </name>
+    <long_name> vapor pressure deficit </long_name>
+    <units> kPa </units>
     <mode> time-dependent </mode>
-    <col_id> 10 </col_id>       
-    <unit_mult> 1.0 </unit_mult>
+    <col_id> 27 </col_id>       
+    <unit_mult> 0.1 </unit_mult> <!-- hPa - kPa-->
     <unit_off> 0.0  </unit_off>
   </variable>
   <variable>
@@ -111,8 +111,35 @@
     <long_name> wind at the lowest atm level </long_name>
     <units> m/s </units>
     <mode> time-dependent </mode>
-    <col_id> 14 </col_id>
-    <unit_mult> 0.2777777777777778 </unit_mult> <!-- km/hr - m/s -->
+    <col_id> 39 </col_id>
+    <unit_mult> 1 </unit_mult> <!-- m/s - m/s -->
     <unit_off> 0.0 </unit_off>
+  </variable>
+  <variable>
+    <name> PSRF </name>
+    <long_name> pressure </long_name>
+    <units> kPa </units>
+    <mode> time-dependent </mode>
+    <col_id> 31 </col_id>
+    <unit_mult> 1 </unit_mult>
+    <unit_off> 0.0 </unit_off>
+  </variable>
+  <variable>
+    <name> RH </name>
+    <long_name> relative humidity </long_name>
+    <units> % </units>
+    <mode> time-dependent </mode>
+    <col_id> 27,31,6 </col_id>
+    <unit_mult> 0.1,1,1 </unit_mult>
+    <unit_off> 0,0,273.14 </unit_off>
+  </variable>
+  <variable>
+    <name> QBOT </name>
+    <long_name> specific humidity </long_name>
+    <units> kg/kg </units>
+    <mode> time-dependent> </mode>
+    <col_id> 27,31,6 </col_id>
+    <unit_mult> 0.1,1,1 </unit_mult>
+    <unit_off> 0,0,273.14 </unit_off>
   </variable>
 </all>

@@ -9,13 +9,15 @@ from datetime import datetime
 from matplotlib.dates import date2num, num2date
 import csv
 from scipy.io import netcdf
+#import matplotlib
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # =======================================================================================
 # Parameters
 # =======================================================================================
 
-simple_verify_ts = False
+simple_verify_ts = True
 epsilon          = 0.622       # Ratio of gas constants vapor/dry air [g/g]
 e_0              = 0.611       # saturation vapor pressure at 0C Clausius-Clapeyron [kPa]
 L_vap            = 2.5*10.0**6 # Latent heat of vaporization [J/kg]
@@ -129,6 +131,10 @@ def rh100_to_qsat_kgkg(RH100,P_kpa,T_k):
 
     return(q)
 
+def VPD_to_RH(VPD,P_kpa,T_k):
+    e_sat = e_0 * np.exp( L_vap/R_vap * (1.0/T_0 - 1.0/T_k) )
+    RH = (1-VPD/e_sat)*100
+    return(RH)
 
 def fillvar_convert_units(variables,textarray,idx): 
 
@@ -137,21 +143,20 @@ def fillvar_convert_units(variables,textarray,idx):
     # Most of the unit changes can be accomodated by offsets and multipliers
     # But some conversions may depend on lapse rates, if reference heights are
     # dissimilar (not implemented), or conversion from relative to specific humidity.
-    # These will determined via flags.
+    # These will determined via flaogs.
+
     
     for var in variables:
 
         # First, parse the unit multipliers and offsets to strings
-
         umul_vec  = var.unit_mult.strip().split(',')
         uoff_vec  = var.unit_off.strip().split(',')
         colid_vec = var.col_id.strip().split(',')
 
-        # Special Case 1, RH conversion to specific humidity in [kg/kg]
+        # Special Case 1, VPD to RH to specific humidity in [kg/kg]
         
-        if( (var.name == 'QBOT') & ( float(uoff_vec[0]) == -1.0)):
+        if( (var.name == 'QBOT') ):
 
-            
             if(len(uoff_vec) != 3 | len(umul_vec) !=3 | len(colid_vec) != 3):
                 print('Incorrect multiplier, offset or col_id specification')
                 print('on conversion from relative to specific humidity?')
@@ -164,20 +169,24 @@ def fillvar_convert_units(variables,textarray,idx):
                 exit(2)
 
             # Assumption, convert RH to SH
-
-            RH100 = float(textarray[int(colid_vec[0])-1]) * float(umul_vec[0]) # OFFSET IS FLAG 
+            VPD = float(textarray[int(colid_vec[0])-1]) * float(umul_vec[0])
+            #RH100 = float(textarray[int(colid_vec[0])-1]) * float(umul_vec[0]) # OFFSET IS FLAG 
             P_kpa = float(textarray[int(colid_vec[1])-1]) * float(umul_vec[1]) + float(uoff_vec[1])
             T_k   = float(textarray[int(colid_vec[2])-1]) * float(umul_vec[2]) + float(uoff_vec[2])
 
             # Saturation Specific Humidity [kg/kg]
-
-            q_spec = rh100_to_qsat_kgkg(RH100,P_kpa,T_k)
+            RH = VPD_to_RH(VPD,P_kpa,T_k)
+            q_spec = rh100_to_qsat_kgkg(RH,P_kpa,T_k)
 
             var.datavec[idx] = q_spec
-
-        # In all other cases, the multiplier and offset should be sufficient
+        elif( (var.name == 'RH') ):
+            VPD = float(textarray[int(colid_vec[0])-1]) * float(umul_vec[0])
+            P_kpa = float(textarray[int(colid_vec[1])-1]) * float(umul_vec[1]) + float(uoff_vec[1])
+            T_k   = float(textarray[int(colid_vec[2])-1]) * float(umul_vec[2]) + float(uoff_vec[2])
+            RH = VPD_to_RH(VPD,P_kpa,T_k)
+            var.datavec[idx] = RH
+            # In all other cases, the multiplier and offset should be sufficient
         else:
-#            code.interact(local=locals())
             var.datavec[idx] = float(textarray[int(colid_vec[0])-1]) * float(umul_vec[0]) + float(uoff_vec[0])
 
         
@@ -259,7 +268,6 @@ def usage():
      print('')
      print('')
      print('=======================================================================')
-
 
 def interp_args(argv):
 
@@ -405,13 +413,14 @@ def load_csv(ctrlp,variables):
     if(simple_verify_ts):
 #        code.interact(local=locals())
         for var in variables:
-            plt.plot_date(rawtime.datenum,var.datavec)
+            print("{c}".format(c=var.name))
+#            plt.plot_date(rawtime.datenum,var.datavec)
 #            plt.plot_date(rawtime.datenum[24280:32000],var.datavec[24280:32000])
 #            code.interact(local=locals())
-            plt.title(var.name)
-            plt.ylabel(var.units)
-            plt.xlabel('Date') 
-            plt.show()
+#            plt.title(var.name)
+#            plt.ylabel(var.units)
+#            plt.xlabel('Date') 
+#            plt.show()
             
         # Check the time variability
 #        plt.plot(rawtime.datenum[0:-2]-rawtime.datenum[1:-1])
@@ -561,6 +570,7 @@ def main(argv):
                 var_out.units = var.units
                 var_out.long_name = var.long_name
                 var_out.mode = var.mode
+                print("{a}, {b}".format(a=var.name, b=np.average(var_out[:,0,0])))
                 fp.flush()
 
             for const in constants:
